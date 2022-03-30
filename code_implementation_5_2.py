@@ -26,9 +26,11 @@ def compute_sensor_endpoint(robot_state, sensors_dist):
     # NOTE: we assume sensor position is in the robot's center
     sens_N = len(sensors_dist)
     obst_points = np.zeros((3, sens_N))
-
     for i in range(sens_N):
-        obst_points[:, i] = robot_state + 0.1 * i * np.ones(3)  # NOTE: this is dummy value
+        # Update detected points from sensors
+        sensor_angle = 2 * np.pi * i / sens_N + robot_state[2]
+        obst_points[0, i] = sensors_dist[i] * np.cos(sensor_angle) + robot_state[0]
+        obst_points[1, i] = sensors_dist[i] * np.sin(sensor_angle) + robot_state[1]
         # TODO: do proper calculation
     return obst_points[:2, :]  # only return x and y values
 
