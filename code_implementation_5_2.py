@@ -5,7 +5,7 @@ from detect_obstacle import detect_obstacle_e5t2
 
 # Constants and Settings
 Ts = 0.01  # Update simulation every 10ms
-t_max = np.pi*10  # total simulation duration in seconds
+t_max = np.pi * 10  # total simulation duration in seconds
 # Set initial state
 init_state = np.array([-2., -.5, 0.])  # px, py, theta
 IS_SHOWING_2DVISUALIZATION = True
@@ -60,7 +60,8 @@ def simulate_control():
         sim_visualizer.set_field(field_x, field_y)  # set plot area
         sim_visualizer.show_goal(desired_state)
         # ADD OBJECT TO PLOT
-        obst_vertices = np.array([[-1., -1.5], [1., -1.5], [1., 1.5], [-1., 1.5], [-1., 1.], [0.5, 1.], [0.5, -1.], [-1., -1.], [-1., -1.5]])
+        obst_vertices = np.array(
+            [[-1., -1.5], [1., -1.5], [1., 1.5], [-1., 1.5], [-1., 1.], [0.5, 1.], [0.5, -1.], [-1., -1.], [-1., -1.5]])
         sim_visualizer.ax.plot(obst_vertices[:, 0], obst_vertices[:, 1], '--r')
 
         # get sensor reading
@@ -80,23 +81,22 @@ def simulate_control():
         sensors_dist = detect_obstacle_e5t2(robot_state[0], robot_state[1], robot_state[2])
         # compute and plot sensor reading endpoint
         obst_points = compute_sensor_endpoint(robot_state, sensors_dist)
-
         # IMPLEMENTATION OF CONTROLLER
         # ------------------------------------------------------------
         # Get x_o
         shortest_dist = obst_points[:, np.argsort(sensors_dist)[-2:]]
-        X_o = (shortest_dist[0] + shortest_dist[1])/2
+        X_o = (shortest_dist[0] + shortest_dist[1]) / 2
 
-        U_wf_t = (shortest_dist[0] - shortest_dist[1])/np.linalg.norm(shortest_dist[0] - shortest_dist[1])
-        U_wf_p = (shortest_dist[0] - robot_state[:2]) - np.dot((np.dot(shortest_dist[0] - robot_state[:2], U_wf_t)), U_wf_t)
-        U_wf_p = U_wf_p - d_safe*(U_wf_p/np.linalg.norm(U_wf_p))
+        U_wf_t = (shortest_dist[0] - shortest_dist[1]) / np.linalg.norm(shortest_dist[0] - shortest_dist[1])
+        U_wf_p = (shortest_dist[0] - robot_state[:2]) - np.dot((np.dot(shortest_dist[0] - robot_state[:2], U_wf_t)),
+                                                               U_wf_t)
+        U_wf_p = U_wf_p - d_safe * (U_wf_p / np.linalg.norm(U_wf_p))
         U_wf = U_wf_p + U_wf_t
 
         # print(f'Dist: {np.linalg.norm(robot_state[:2] - X_o)} Limit: {np.abs(d_safe + eps)}')
-        print(U_wf.shape)
 
-        if (np.linalg.norm(robot_state[:2] - X_o) <= np.abs(d_safe + eps)): #  and (np.dot(U_wf, desired_state[:2]-robot_state[:2])>0)
-            print('wall')
+        if (np.linalg.norm(robot_state[:2] - X_o) <= np.abs(
+                d_safe + eps)):  # and (np.dot(U_wf, desired_state[:2]-robot_state[:2])>0)
             current_input[0] = U_wf[0]
             current_input[1] = U_wf[1]
         else:
@@ -105,7 +105,6 @@ def simulate_control():
             # current_input[2] = -2
 
         # Compute the control input 
-        
 
         # TODO: change the implementation to switching
         # ------------------------------------------------------------
