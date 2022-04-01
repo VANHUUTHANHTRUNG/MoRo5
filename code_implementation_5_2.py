@@ -5,7 +5,7 @@ from detect_obstacle import detect_obstacle_e5t2
 
 # Constants and Settings
 Ts = 0.01  # Update simulation every 10ms
-t_max = np.pi  # total simulation duration in seconds
+t_max = np.pi*10  # total simulation duration in seconds
 # Set initial state
 init_state = np.array([-2., -.5, 0.])  # px, py, theta
 IS_SHOWING_2DVISUALIZATION = True
@@ -14,6 +14,11 @@ IS_SHOWING_2DVISUALIZATION = True
 v_trans_max = 0.5  # m/s
 v_rot_max = 5  # rad/s
 robot_radius = 0.21  # robot's radius in meter
+
+# params
+d_safe = robot_radius + 0.01
+eps = 0.05
+dist_at_cross = 69420
 
 # Define Field size for plotting (should be in tuple)
 field_x = (-2.5, 2.5)
@@ -31,7 +36,6 @@ def compute_sensor_endpoint(robot_state, sensors_dist):
         sensor_angle = 2 * np.pi * i / sens_N + robot_state[2]
         obst_points[0, i] = sensors_dist[i] * np.cos(sensor_angle) + robot_state[0]
         obst_points[1, i] = sensors_dist[i] * np.sin(sensor_angle) + robot_state[1]
-        # TODO: do proper calculation
     return obst_points[:2, :]  # only return x and y values
 
 
@@ -79,10 +83,29 @@ def simulate_control():
 
         # IMPLEMENTATION OF CONTROLLER
         # ------------------------------------------------------------
+        # Get x_o
+        shortest_dist = obst_points[:, np.argsort(sensors_dist)[-2:]]
+        X_o = (shortest_dist[0] + shortest_dist[1])/2
+
+        U_wf_t = (shortest_dist[0] - shortest_dist[1])/np.linalg.norm(shortest_dist[0] - shortest_dist[1])
+        U_wf_p = (shortest_dist[0] - robot_state[:2]) - np.dot((np.dot(shortest_dist[0] - robot_state[:2], U_wf_t)), U_wf_t)
+        U_wf_p = U_wf_p - d_safe*(U_wf_p/np.linalg.norm(U_wf_p))
+        U_wf = U_wf_p + U_wf_t
+
+        # print(f'Dist: {np.linalg.norm(robot_state[:2] - X_o)} Limit: {np.abs(d_safe + eps)}')
+        print(U_wf.shape)
+
+        if (np.linalg.norm(robot_state[:2] - X_o) <= np.abs(d_safe + eps)): #  and (np.dot(U_wf, desired_state[:2]-robot_state[:2])>0)
+            print('wall')
+            current_input[0] = U_wf[0]
+            current_input[1] = U_wf[1]
+        else:
+            current_input[0] = 0.7
+            current_input[1] = 0
+            # current_input[2] = -2
+
         # Compute the control input 
-        current_input[0] = 0
-        current_input[1] = 0
-        current_input[2] = -2.
+        
 
         # TODO: change the implementation to switching
         # ------------------------------------------------------------

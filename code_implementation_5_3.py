@@ -21,7 +21,7 @@ d_safe = obstacle_state[2] + robot_radius + 0.001  # safe distance as sum of 2 r
 beta = 5
 
 # TODO: Experiment with different value
-gamma = 2
+gamma = 10
 
 IS_SHOWING_2DVISUALIZATION = True
 
@@ -45,6 +45,7 @@ def simulate_control():
     state_history = np.zeros((sim_iter, len(robot_state)))
     goal_history = np.zeros((sim_iter, len(desired_state)))
     input_history = np.zeros((sim_iter, len(current_input)))
+    h_history = np.zeros((sim_iter, 2))
 
     if IS_SHOWING_2DVISUALIZATION:  # Initialize Plot
         sim_visualizer = sim_mobile_robot('omnidirectional')  # Omnidirectional Icon
@@ -100,6 +101,7 @@ def simulate_control():
         # record the computed input at time-step t
         input_history[it] = current_input
         error_history[it] = error
+        h_history[it] = H
 
         if IS_SHOWING_2DVISUALIZATION:  # Update Plot
             sim_visualizer.update_time_stamp(it * Ts)
@@ -118,37 +120,45 @@ def simulate_control():
     # End of iterations
     # ---------------------------
     # return the stored value for additional plotting or comparison of parameters
-    return state_history, goal_history, input_history
+    return state_history, goal_history, input_history, h_history
 
 
 if __name__ == '__main__':
     # Call main computation for robot simulation
-    state_history, goal_history, input_history = simulate_control()
+    state_history, goal_history, input_history, h_history = simulate_control()
 
     # ADDITIONAL PLOTTING
     # ----------------------------------------------
     t = [i * Ts for i in range(round(t_max / Ts))]
 
     # # Plot historical data of control input
-    # fig2 = plt.figure(2)
+    fig2 = plt.figure(2)
+    ax = plt.gca()
+    ax.plot(t, input_history[:,0], label='vx [m/s]')
+    ax.plot(t, input_history[:,1], label='vy [m/s]')
+    ax.set(xlabel="t [s]", ylabel="control input")
+    plt.legend()
+    plt.grid()
+
+    # # Plot historical data of state
+    # fig3 = plt.figure(3)
     # ax = plt.gca()
-    # ax.plot(t, input_history[:,0], label='vx [m/s]')
-    # ax.plot(t, input_history[:,1], label='vy [m/s]')
-    # ax.plot(t, input_history[:,2], label='omega [rad/s]')
-    # ax.set(xlabel="t [s]", ylabel="control input")
+    # ax.plot(t, state_history[:, 0], label='px [m]')
+    # ax.plot(t, state_history[:, 1], label='py [m]')
+    # ax.plot(t, state_history[:, 2], label='theta [rad]')
+    # ax.plot(t, goal_history[:, 0], ':', label='goal px [m]')
+    # ax.plot(t, goal_history[:, 1], ':', label='goal py [m]')
+    # ax.plot(t, goal_history[:, 2], ':', label='goal theta [rad]')
+    # ax.set(xlabel="t [s]", ylabel="state")
     # plt.legend()
     # plt.grid()
 
-    # Plot historical data of state
-    fig3 = plt.figure(3)
+
+    fig4 = plt.figure(4)
     ax = plt.gca()
-    ax.plot(t, state_history[:, 0], label='px [m]')
-    ax.plot(t, state_history[:, 1], label='py [m]')
-    ax.plot(t, state_history[:, 2], label='theta [rad]')
-    ax.plot(t, goal_history[:, 0], ':', label='goal px [m]')
-    ax.plot(t, goal_history[:, 1], ':', label='goal py [m]')
-    ax.plot(t, goal_history[:, 2], ':', label='goal theta [rad]')
-    ax.set(xlabel="t [s]", ylabel="state")
+    ax.plot(t, h_history[:,0], label='ho1 [m/s]')
+    ax.plot(t, h_history[:,1], label='ho2 [m/s]')
+    ax.set(xlabel="t [s]", ylabel="h(x)")
     plt.legend()
     plt.grid()
 
